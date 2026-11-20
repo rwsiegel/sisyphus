@@ -14,6 +14,7 @@ import subprocess
 import sys
 from datetime import date, timedelta
 
+from companies import load_companies
 from settings import CONFIG, DATA_DIR, OUTPUT_DIR, REPO_DIR, WEBSITE_DIR, latest_run_day
 
 SRC = os.path.dirname(os.path.abspath(__file__))
@@ -46,6 +47,13 @@ def recent_changes(run_day, days=7):
             new.extend(day_log["new"])
             closed.extend(day_log["closed"])
     return new, closed
+
+
+def latest_a16z_feed(run_day):
+    """The newest a16z board result on or before the run day, or None."""
+    files = [f for f in sorted(glob.glob(os.path.join(DATA_DIR, "runs", "*", "a16z_feed.json")))
+             if os.path.basename(os.path.dirname(f)) <= run_day]
+    return json.load(open(files[-1], encoding="utf-8")) if files else None
 
 
 def previous_run_json(run_day):
@@ -103,6 +111,16 @@ def main():
             print(f"  NEW    {r['Score']:5.1f}  {r['Company']}: {r['Title']}")
     else:
         print("\nNo earlier scored run to compare with.")
+
+    feed = latest_a16z_feed(run_day)
+    if feed:
+        tracked = {c["company"].lower() for c in load_companies()}
+        print(f"\na16z board, Boston, last 30 days, data and analytics searches ({feed['date']}): {len(feed['roles'])} roles")
+        for r in feed["roles"]:
+            note = "" if r["company"].lower() in tracked else "   <- not in your company list yet"
+            print(f"  A16Z   {r['company']}: {r['title']}{note}")
+        if any(s["may_be_more"] for s in feed["searches"]):
+            print("  (a search returned the page maximum of 25, so there may be more)")
 
     new_roles, closed_roles = recent_changes(run_day)
     print(f"\nFrom the daily collection, last 7 days: {len(new_roles)} target roles appeared, {len(closed_roles)} closed")

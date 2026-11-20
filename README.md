@@ -38,6 +38,7 @@ Check each site's terms before you run this, and keep the request rate polite.
 | Collect postings from known boards (daily) | `python src/collect.py` |
 | Find investor portfolio boards (rarely) | `python src/vc_boards.py` |
 | Search investor boards for data roles | `python src/vc_search.py` |
+| Search a16z's own jobs page for data roles near Boston | `python src/a16z_feed.py` |
 | Score and write the workbook (local only) | `python src/build_workbook.py` |
 | Build the interactive pages (local only) | `python src/build_page.py` |
 | **Weekly refresh: pull, score, build pages, update your local website copy** | `python src/refresh.py` |

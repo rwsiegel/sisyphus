@@ -20,6 +20,8 @@ try {
     $collectExit = $LASTEXITCODE
     & $Python (Join-Path $repo "src\vc_search.py")
     $searchExit = $LASTEXITCODE
+    & $Python (Join-Path $repo "src\a16z_feed.py")
+    $feedExit = $LASTEXITCODE
 
     # Only the data folder is ever staged. Unchanged boards write no file, so the commit holds just the day's changes.
     git -C $data add data
@@ -31,8 +33,8 @@ try {
         Write-Output "Nothing new to commit."
     }
 
-    if ($collectExit -ne 0 -or $searchExit -ne 0) {
-        throw "collect.py exit $collectExit, vc_search.py exit $searchExit. See $log"
+    if ($collectExit -ne 0 -or $searchExit -ne 0 -or $feedExit -ne 0) {
+        throw "collect.py exit $collectExit, vc_search.py exit $searchExit, a16z_feed.py exit $feedExit. See $log"
     }
 }
 finally {
