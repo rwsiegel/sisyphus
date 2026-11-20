@@ -1,0 +1,16 @@
+{
+  "data_dir": "C:\\path\\to\\jobhunt-data\\data",
+  "run_date": "",
+  "library_dir": "C:\\path\\to\\private\\job-search\\folder",
+  "run_list": "C:\\path\\to\\jobhunt\\input\\company_run_list.xlsx",
+  "shortlist_html": "C:\\path\\to\\Startup Shortlist.html",
+  "resume_de": "C:\\path\\to\\data_engineer_resume.docx",
+  "resume_ae": "C:\\path\\to\\analytics_engineer_resume.docx",
+  "output_dir": "C:\\path\\to\\private\\output\\folder",
+  "private_notes": {
+    "Example Company": "note shown as a flag, e.g. already applied"
+  },
+  "pay_floor": 150000,
+  "site_home_url": "/",
+  "site_home_label": "Your Name"
+}

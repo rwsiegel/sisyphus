@@ -1,0 +1,23 @@
+# Private. Never commit: resume facts, the job tracker, LinkedIn exports, personal paths, scored output.
+config.json
+input/
+*resume*
+*tracker*
+*linkedin*
+*.docx
+*.pdf
+*.xlsx
+*.xls
+*.csv
+job_search_run_*
+Startup Shortlist*
+shortlist_data*
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Local run logs
+logs/
+*.log

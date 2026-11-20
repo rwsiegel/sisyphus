@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__</title>
+<meta name="description" content="__DESCRIPTION__">
+<style>
+:root {
+  --bg: #f5f6f8; --card: #ffffff; --text: #1b1f27; --muted: #5d6675; --line: #dfe3ea;
+  --link: #1f4fa3; --good: #1d7a4a; --warn: #9a5b00; --bad: #b3261e;
+  --c0: #2d4f9e; --c1: #1d7a4a; --c2: #9a5b00; --c3: #6b7686; --c4: #7a3b8e; --c5: #2a8b92;
+  --badge-bg: #e7edf8; --good-bg: #e2f2e9; --warn-bg: #fbeed6; --bad-bg: #f8e1df;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14171c; --card: #1c2027; --text: #e8ebf0; --muted: #98a2b3; --line: #2c323c;
+    --link: #8db4ff; --good: #5fc790; --warn: #e0a64a; --bad: #f08a82;
+    --c0: #6f94e6; --c1: #5fc790; --c2: #e0a64a; --c3: #8a95a6; --c4: #c08bd6; --c5: #5cc4cb;
+    --badge-bg: #26324a; --good-bg: #1f3a2d; --warn-bg: #3d3220; --bad-bg: #44221f;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+a { color: var(--link); }
+main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-size: 26px; margin: 0 0 4px; }
+.sub { color: var(--muted); margin: 0 0 16px; }
+details.panel { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; margin: 0 0 12px; }
+details.panel summary { cursor: pointer; font-weight: 600; }
+details.panel p { margin: 8px 0 0; color: var(--muted); }
+.dials { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px 20px; margin-top: 10px; }
+.dials label { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; font-size: 13px; }
+.dials input[type=range] { grid-column: 1 / -1; width: 100%; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin: 12px 0; font-size: 14px; }
+.filters input[type=search] { min-width: 260px; }
+.filters select, .filters input[type=search] { font: inherit; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--text); }
+button { font: inherit; padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--text); cursor: pointer; }
+.count { color: var(--muted); margin: 4px 0 12px; font-size: 14px; }
+article.card { display: grid; grid-template-columns: 150px 1fr; gap: 0 20px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 16px; margin: 0 0 14px; }
+.side .big { font-size: 34px; font-weight: 700; line-height: 1.1; }
+.side .big.neg { color: var(--bad); }
+.side .small { color: var(--muted); font: 12px ui-monospace, Consolas, monospace; }
+.bar { display: flex; height: 8px; margin: 8px 0; border-radius: 2px; overflow: hidden; background: var(--line); }
+.bar span { display: block; height: 100%; }
+.parts { font: 12px ui-monospace, Consolas, monospace; color: var(--muted); }
+.parts div { display: flex; justify-content: space-between; }
+.head h2 { display: inline; font-size: 20px; margin: 0 8px 0 0; }
+.head .sector { color: var(--muted); font: 12px ui-monospace, Consolas, monospace; text-transform: uppercase; }
+.meta { color: var(--muted); font: 13px ui-monospace, Consolas, monospace; margin: 2px 0 8px; }
+.badges { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+.badge { font-size: 12px; padding: 2px 9px; border-radius: 999px; background: var(--badge-bg); }
+.badge.good { background: var(--good-bg); color: var(--good); }
+.badge.warn { background: var(--warn-bg); color: var(--warn); }
+.badge.bad { background: var(--bad-bg); color: var(--bad); }
+.blurb { margin: 0 0 12px; max-width: 70ch; }
+dl.facts { display: grid; grid-template-columns: 120px 1fr; gap: 6px 14px; margin: 0; font-size: 14px; }
+dl.facts dt { color: var(--muted); font: 12px ui-monospace, Consolas, monospace; text-transform: uppercase; padding-top: 2px; }
+dl.facts dd { margin: 0; }
+dl.facts ul { margin: 0; padding-left: 18px; }
+.role { margin: 0 0 6px; }
+.role .rscore { font: 12px ui-monospace, Consolas, monospace; color: var(--muted); }
+.links { margin: 12px 0 0; display: flex; gap: 16px; flex-wrap: wrap; font-size: 14px; }
+details.src { margin-top: 8px; font-size: 13px; color: var(--muted); }
+details.src a { display: block; overflow-wrap: anywhere; }
+@media (max-width: 700px) {
+  article.card { grid-template-columns: 1fr; }
+  dl.facts { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<main>
+__BACKLINK__
+<h1>__TITLE__</h1>
+<p class="sub" id="sub"></p>
+
+<details class="panel">
+  <summary>How the score works</summary>
+  <p>Each open data role is scored out of <span id="maxscore"></span>: pay (does the top of the range reach __PAY_FLOOR__), role fit (analytics engineer scores highest, then data engineer, data platform, software engineer on a data platform; seniority; Boston or remote US), recency (1 day or less scores highest, easing down to 90 days), hiring (how many roles the company has open), investors, and layoffs subtract. A company's number is its best role's score compared with the average. A near miss is a role that misses exactly one hard criterion by a small margin: posted 8 to 30 days ago, or pay close to the target. Stage outside Series A to D, industry, and a Glassdoor rating under 3.5 are flags, never reasons to drop a company. Facts come from public job boards and web research; each card lists its sources.</p>
+</details>
+<details class="panel">
+  <summary>Adjust the scoring (dials)</summary>
+  <p>Every weight is a dial from 0 to 2 times its default. The list re-ranks as you move one. Changes last until you reload the page.</p>
+  <div class="dials" id="dials"></div>
+  <p><button id="reset" type="button">Reset to default</button></p>
+</details>
+
+<div class="filters" id="filters"></div>
+<div class="count" id="count" role="status"></div>
+<div id="cards"></div>
+</main>
+
+<script type="application/json" id="data">__DATA__</script>
+<script>
+"use strict";
+const DATA = JSON.parse(document.getElementById("data").textContent);
+const SHOWCASE = DATA.showcase;
+
+const COMPONENTS = [
+  { key: "pay", label: "Pay", max: 30 },
+  { key: "fit", label: "Role fit", max: 25 },
+  { key: "recency", label: "Recency", max: 25 },
+  { key: "hire", label: "Hiring", max: 15 },
+  { key: "invest", label: "Investors", max: 20 },
+  { key: "tfidf", label: "Resume match", max: 10, privateOnly: true },
+].filter(c => !(c.privateOnly && SHOWCASE));
+const MAX_TOTAL = COMPONENTS.reduce((sum, c) => sum + c.max, 0);
+
+const W = {};            // dial values
+function resetWeights() { for (const c of COMPONENTS) W[c.key] = 1; W.layoff = 1; }
+resetWeights();
+
+const F = { text: "", type: "", where: "", stage: "", maxAge: "", crit: "", showEmpty: false };
+
+// ---------- helpers ----------
+function el(tag, attrs, ...children) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === "class") node.className = v;
+    else if (k === "text") node.textContent = v;
+    else if (k === "href") { if (/^https?:\/\//i.test(v)) { node.href = v; node.rel = "noopener noreferrer"; node.target = "_blank"; } }
+    else node.setAttribute(k, v);
+  }
+  for (const c of children) if (c) node.append(c);
+  return node;
+}
+const kay = n => "$" + Math.round(n / 1000) + "K";
+function fmtPay(r) {
+  if (!r.pay_high) return "pay unposted";
+  return r.pay_low && r.pay_low !== r.pay_high ? kay(r.pay_low) + "–" + kay(r.pay_high) : kay(r.pay_high);
+}
+function fmtAge(a) { return a === null ? "date unknown" : a === 0 ? "today" : a === 1 ? "1 day ago" : a + " days ago"; }
+function list(text) { return text.split(" | ").map(s => s.trim()).filter(Boolean); }
+function isPremium(name) { const n = name.toLowerCase(); return DATA.premium.some(p => n.includes(p)); }
+
+// ---------- scoring ----------
+function roleScore(r) {
+  let s = 0;
+  for (const c of COMPONENTS) s += W[c.key] * (r.pts[c.key] || 0);
+  return s - W.layoff * (r.layoff_pen || 0);
+}
+
+// ---------- filtering ----------
+function passRole(r) {
+  if (F.type && r.type !== F.type) return false;
+  if (F.where && r.where !== F.where) return false;
+  if (F.maxAge && (r.age === null || r.age > Number(F.maxAge))) return false;
+  if (F.crit === "meets" && !r.meets) return false;
+  if (F.crit === "near" && !r.near_miss) return false;
+  return true;
+}
+function passCompany(c) {
+  if (F.stage === "ok" && c.stage_ok !== true) return false;
+  if (F.stage === "flag" && c.stage_ok !== false) return false;
+  if (F.text) {
+    const hay = (c.name + " " + c.build + " " + c.investors + " " + c.stack + " " + c.sector).toLowerCase();
+    if (!hay.includes(F.text.toLowerCase())) return false;
+  }
+  return true;
+}
+
+// ---------- rendering ----------
+function bar(best) {
+  const total = COMPONENTS.reduce((s, c) => s + W[c.key] * c.max, 0) || 1;
+  const wrap = el("div", { class: "bar", role: "img", "aria-label": "Score breakdown" });
+  COMPONENTS.forEach((c, i) => {
+    const pts = W[c.key] * (best.pts[c.key] || 0);
+    const seg = el("span", { title: c.label + " " + pts.toFixed(1) });
+    seg.style.width = Math.max(0, pts / total * 100) + "%";
+    seg.style.background = "var(--c" + i + ")";
+    wrap.append(seg);
+  });
+  return wrap;
+}
+
+function row(label, content) {
+  if (!content) return null;
+  return [el("dt", { text: label }), el("dd", null, content)];
+}
+
+function investorsNode(text) {
+  // Text is "A, B | C, D | X, Y (listed on their portfolio job boards, date)". The last kind is a separate note.
+  const BOARD_MARK = " (listed on their portfolio job boards";
+  const seen = new Set();
+  const names = [], boardNames = [];
+  for (const segment of list(text)) {
+    const onBoards = segment.includes(BOARD_MARK);
+    const target = onBoards ? boardNames : names;
+    for (const n of (onBoards ? segment.split(BOARD_MARK)[0] : segment).split(", ")) {
+      const name = n.trim();
+      if (name && !seen.has(name.toLowerCase())) { seen.add(name.toLowerCase()); target.push(name); }
+    }
+  }
+  const fill = (wrap, items) => items.forEach((n, i) => {
+    wrap.append(isPremium(n) ? el("strong", { text: n }) : document.createTextNode(n));
+    if (i < items.length - 1) wrap.append(", ");
+  });
+  const wrap = document.createElement("div");
+  if (names.length) { const line = document.createElement("div"); fill(line, names); wrap.append(line); }
+  if (boardNames.length) {
+    const line = el("div", { class: "rscore" });
+    line.append("Also on the portfolio job boards of: ");
+    fill(line, boardNames);
+    wrap.append(line);
+  }
+  return wrap;
+}
+
+function bullets(text) {
+  const items = list(text);
+  if (!items.length) return null;
+  const ul = el("ul");
+  items.forEach(t => ul.append(el("li", { text: t })));
+  return ul;
+}
+
+function card(c, roles, rank, avg) {
+  const best = roles[0];
+  const art = el("article", { class: "card" });
+
+  const side = el("div", { class: "side" });
+  if (best) {
+    const diff = best._score - avg;
+    side.append(
+      el("div", { class: "big" + (diff < 0 ? " neg" : ""), text: (diff >= 0 ? "+" : "") + diff.toFixed(1) }),
+      el("div", { class: "small", text: "vs avg" }),
+      el("div", { class: "small", text: "#" + rank + " · score " + best._score.toFixed(1) }),
+      bar(best));
+    const parts = el("div", { class: "parts" });
+    for (const comp of COMPONENTS) {
+      parts.append(el("div", null, el("span", { text: comp.label }), el("span", { text: ((W[comp.key] * best.pts[comp.key]) || 0).toFixed(1) + "/" + (comp.max * W[comp.key]).toFixed(0) })));
+    }
+    if (best.layoff_pen) parts.append(el("div", null, el("span", { text: "Layoffs" }), el("span", { text: "-" + (W.layoff * best.layoff_pen).toFixed(0) })));
+    side.append(parts);
+  } else {
+    side.append(el("div", { class: "small", text: "no open target role" }));
+  }
+
+  const body = el("div", { class: "body" });
+  body.append(el("div", { class: "head" }, el("h2", { text: c.name }), c.sector ? el("span", { class: "sector", text: c.sector }) : null));
+  const meta = [c.stage, c.headcount].filter(Boolean).join(" · ");
+  if (meta) body.append(el("div", { class: "meta", title: meta, text: meta.length > 170 ? meta.slice(0, 167) + "…" : meta }));
+
+  // Flags every role of this company shares (industry, federal work...) show once as badges, not under each role.
+  const sharedFlags = roles.length ? roles[0].flags.filter(f => roles.every(r => r.flags.includes(f))) : [];
+  const badges = el("div", { class: "badges" });
+  sharedFlags.forEach(f => badges.append(el("span", { class: "badge warn", text: f })));
+  if (best && best.meets) badges.append(el("span", { class: "badge good", text: "Meets every criterion" }));
+  if (best && best.near_miss) badges.append(el("span", { class: "badge warn", text: "Near miss: " + best.near_miss }));
+  if (best) badges.append(el("span", { class: "badge", text: best.where }));
+  if (roles.length) badges.append(el("span", { class: "badge good", text: roles.length + " open data role" + (roles.length > 1 ? "s" : "") }));
+  if (c.stage_ok === false) badges.append(el("span", { class: "badge warn", text: "Outside Series A–D" }));
+  if (c.first_hire.toLowerCase().startsWith("possible") || c.first_hire.toLowerCase().startsWith("likely")) badges.append(el("span", { class: "badge warn", text: "Possible first data hire" }));
+  if (/^[0-3]\.\d|^[0-3] /.test(c.glassdoor) && parseFloat(c.glassdoor) < 3.5) badges.append(el("span", { class: "badge bad", text: "Glassdoor under 3.5" }));
+  if (c.check_linkedin) badges.append(el("span", { class: "badge warn", text: "Job board not read: check LinkedIn" }));
+  body.append(badges);
+
+  if (c.build) body.append(el("p", { class: "blurb", text: c.build }));
+
+  const dl = el("dl", { class: "facts" });
+  const add = pair => { if (pair) dl.append(...pair); };
+
+  if (roles.length) {
+    const box = document.createElement("div");
+    roles.slice(0, 6).forEach(r => {
+      const line = el("div", { class: "role" },
+        el("a", { href: r.url, text: r.title }),
+        el("span", { class: "rscore", text: "  " + [r.location || r.where, fmtAge(r.age), fmtPay(r), "score " + r._score.toFixed(1)].join(" · ") }));
+      box.append(line);
+      const ownFlags = r.flags.filter(f => !sharedFlags.includes(f));
+      if (ownFlags.length) box.append(el("div", { class: "rscore", text: ownFlags.join("; ") }));
+    });
+    if (roles.length > 6) box.append(el("div", { class: "rscore", text: "+ " + (roles.length - 6) + " more" }));
+    add(row("Open data roles", box));
+  }
+  add(row("Investors", c.investors ? investorsNode(c.investors) : null));
+  add(row("Stack", c.stack ? document.createTextNode(c.stack) : null));
+  add(row("Customers", c.customers ? document.createTextNode(c.customers) : null));
+  add(row("Location", c.location ? document.createTextNode(c.location) : null));
+  add(row("Data team", c.data_team ? document.createTextNode(c.data_team) : null));
+  add(row("Layoffs", c.layoffs && c.layoffs !== "not researched" ? document.createTextNode(c.layoffs) : null));
+  add(row("Glassdoor", c.glassdoor && c.glassdoor !== "not researched" ? document.createTextNode(c.glassdoor) : null));
+  add(row("Worth knowing", bullets(c.worth)));
+  add(row("Watch-outs", bullets(c.watch)));
+  add(row("Identity note", c.identity ? document.createTextNode(c.identity) : null));
+  add(row("Source list note", c.info_flag ? document.createTextNode(c.info_flag) : null));
+  body.append(dl);
+
+  const links = el("div", { class: "links" });
+  if (c.careers) links.append(el("a", { href: c.careers, text: "Careers page" }));
+  if (c.linkedin) links.append(el("a", { href: c.linkedin, text: "LinkedIn data roles, past week" }));
+  body.append(links);
+
+  if (c.sources.length) {
+    const d = el("details", { class: "src" }, el("summary", { text: c.sources.length + " sources" }));
+    c.sources.forEach(u => d.append(el("a", { href: u, text: u })));
+    body.append(d);
+  }
+
+  art.append(side, body);
+  return art;
+}
+
+function render() {
+  const byCompany = new Map();
+  for (const r of DATA.roles) {
+    if (!passRole(r)) continue;
+    r._score = roleScore(r);
+    if (!byCompany.has(r.company)) byCompany.set(r.company, []);
+    byCompany.get(r.company).push(r);
+  }
+  for (const rs of byCompany.values()) rs.sort((a, b) => b._score - a._score);
+
+  const withRoles = [], without = [];
+  for (const c of DATA.companies) {
+    if (!passCompany(c)) continue;
+    const rs = byCompany.get(c.name) || [];
+    (rs.length ? withRoles : without).push({ c, rs });
+  }
+  withRoles.sort((a, b) => b.rs[0]._score - a.rs[0]._score);
+  without.sort((a, b) => a.c.name.localeCompare(b.c.name));
+
+  const avg = withRoles.length ? withRoles.reduce((s, x) => s + x.rs[0]._score, 0) / withRoles.length : 0;
+  const shown = F.showEmpty ? withRoles.concat(without) : withRoles;
+
+  const holder = document.getElementById("cards");
+  holder.replaceChildren(...shown.map((x, i) => card(x.c, x.rs, i + 1, avg)));
+  const roleCount = withRoles.reduce((s, x) => s + x.rs.length, 0);
+  document.getElementById("count").textContent =
+    withRoles.length + " companies with " + roleCount + " matching roles" +
+    (F.showEmpty ? "; " + without.length + " more with no open target role" : "; " + without.length + " more have no open target role (tick the box to show them)") +
+    ". Average score of companies shown: " + avg.toFixed(1) + ".";
+}
+
+// ---------- controls ----------
+function buildControls() {
+  document.getElementById("sub").textContent =
+    "Collected " + DATA.run_date + " from public job boards and investor portfolio boards. " +
+    DATA.companies.length + " companies, " + DATA.roles.length + " open data roles in Boston or remote US." +
+    (SHOWCASE ? " Showcase version." : " Private version: includes resume match.");
+  document.getElementById("maxscore").textContent = MAX_TOTAL;
+
+  const dials = document.getElementById("dials");
+  const dialList = COMPONENTS.map(c => ({ key: c.key, label: c.label + " (" + c.max + ")" })).concat([{ key: "layoff", label: "Layoff penalty" }]);
+  for (const d of dialList) {
+    const out = el("span", { text: "1.0×" });
+    const input = el("input", { type: "range", min: "0", max: "2", step: "0.1", value: "1", "aria-label": d.label, "data-key": d.key });
+    input.addEventListener("input", () => { W[d.key] = Number(input.value); out.textContent = Number(input.value).toFixed(1) + "×"; render(); });
+    dials.append(el("label", null, el("span", { text: d.label }), out, input));
+  }
+  document.getElementById("reset").addEventListener("click", () => {
+    resetWeights();
+    dials.querySelectorAll("input").forEach(i => { i.value = "1"; i.previousSibling.textContent = "1.0×"; });
+    render();
+  });
+
+  const f = document.getElementById("filters");
+  const select = (label, key, options) => {
+    const s = el("select", { "aria-label": label });
+    options.forEach(([v, t]) => s.append(el("option", { value: v, text: t })));
+    s.addEventListener("change", () => { F[key] = s.value; render(); });
+    return s;
+  };
+  const search = el("input", { type: "search", placeholder: "Search company, stack, investor…", "aria-label": "Search" });
+  search.addEventListener("input", () => { F.text = search.value.trim(); render(); });
+  const check = (label, key) => {
+    const box = el("input", { type: "checkbox" });
+    box.addEventListener("change", () => { F[key] = box.checked; render(); });
+    return el("label", null, box, document.createTextNode(" " + label));
+  };
+  f.append(
+    search,
+    select("Role type", "type", [["", "All role types"], ["analytics engineer", "Analytics engineer"], ["data engineer", "Data engineer"], ["data platform engineer", "Data platform"], ["software engineer on a data platform", "Software engineer on data platform"]]),
+    select("Location", "where", [["", "Boston or remote US"], ["Boston", "Boston"], ["Remote US", "Remote US"]]),
+    select("Stage", "stage", [["", "All stages"], ["ok", "Series A–D"], ["flag", "Outside A–D (flagged)"]]),
+    select("Posted within", "maxAge", [["", "Any age"], ["7", "7 days"], ["14", "14 days"], ["30", "30 days"], ["90", "90 days"]]),
+    select("Criteria", "crit", [["", "All roles"], ["meets", "Meets every criterion"], ["near", "Near misses (miss one by a little)"]]),
+    check("Show companies with no open target role", "showEmpty"));
+}
+
+buildControls();
+render();
+</script>
+</body>
+</html>
