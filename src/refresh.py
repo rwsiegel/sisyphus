@@ -12,6 +12,7 @@ import os
 import shutil
 import subprocess
 import sys
+from datetime import date, timedelta
 
 from settings import CONFIG, DATA_DIR, OUTPUT_DIR, REPO_DIR, WEBSITE_DIR, latest_run_day
 
@@ -32,6 +33,19 @@ def run(script, run_day):
         print(result.stderr[-1500:])
         sys.exit(f"{script} failed (exit {result.returncode})")
     return result.stdout
+
+
+def recent_changes(run_day, days=7):
+    """Target roles that appeared or closed in the last few days, from the daily change logs."""
+    last = date.fromisoformat(run_day)
+    new, closed = [], []
+    for back in range(days):
+        path = os.path.join(DATA_DIR, "changes", f"{last - timedelta(days=back)}.json")
+        if os.path.exists(path):
+            day_log = json.load(open(path, encoding="utf-8"))
+            new.extend(day_log["new"])
+            closed.extend(day_log["closed"])
+    return new, closed
 
 
 def previous_run_json(run_day):
@@ -89,6 +103,11 @@ def main():
             print(f"  NEW    {r['Score']:5.1f}  {r['Company']}: {r['Title']}")
     else:
         print("\nNo earlier scored run to compare with.")
+
+    new_roles, closed_roles = recent_changes(run_day)
+    print(f"\nFrom the daily collection, last 7 days: {len(new_roles)} target roles appeared, {len(closed_roles)} closed")
+    for r in closed_roles[:10]:
+        print(f"  CLOSED {r['company']}: {r['title']} (first seen {r['first_seen'] or 'earlier'})")
 
     print("\nNext: upload", WEBSITE_DIR or "the showcase page", "to your site. The workbook and the private page stay on this PC.")
 

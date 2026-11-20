@@ -1,6 +1,6 @@
-# Weekly collection. Reads public job boards and pushes the results to jobhunt-data.
+# Daily collection. Reads public job boards and pushes the day's changes to jobhunt-data.
 # No scoring, no resumes, no config.json. Scoring stays local and is run by hand.
-# Scheduled by scripts/register_weekly_task.ps1.
+# Scheduled by scripts/register_daily_task.ps1.
 param([string]$Python = "python")
 
 $ErrorActionPreference = "Stop"
@@ -21,11 +21,11 @@ try {
     & $Python (Join-Path $repo "src\vc_search.py")
     $searchExit = $LASTEXITCODE
 
-    # Only the data folder is ever staged.
+    # Only the data folder is ever staged. Unchanged boards write no file, so the commit holds just the day's changes.
     git -C $data add data
     git -C $data diff --cached --quiet
     if ($LASTEXITCODE -ne 0) {
-        git -C $data commit -m ("Weekly collection {0}" -f (Get-Date -Format "yyyy-MM-dd"))
+        git -C $data commit -m ("Daily collection {0}" -f (Get-Date -Format "yyyy-MM-dd"))
         git -C $data push
     } else {
         Write-Output "Nothing new to commit."

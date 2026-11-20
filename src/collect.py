@@ -1,5 +1,6 @@
-# Pull every posting from each board found by probe_ats.py and save one flat list to postings.json.
-# Each posting keeps its source URL and the date field it came from.
+# Pull every posting from each board found by probe_ats.py, once a day.
+# Only the current postings are kept (see store.py), with the first day each was seen and a small
+# log of target roles that appeared or disappeared. Each posting keeps its source URL and date field.
 import gzip
 import html
 import json
@@ -7,7 +8,10 @@ import re
 from datetime import datetime, timezone
 import requests
 
+from filters import role_type
 from settings import COLLECT_DAY, data_path, run_path
+from store import (changes_path, load_changes, load_first_seen, posting_key, read_board,
+                   save_first_seen, write_board)
 
 HEADERS = {"User-Agent": "jobhunt-collector/0.1"}
 
@@ -221,22 +225,60 @@ FETCHERS = {"greenhouse": greenhouse, "lever": lever, "ashby": ashby,
             "workable": workable, "smartrecruiters": smartrecruiters,
             "breezy": breezy, "rippling": rippling, "bamboohr": bamboohr}
 
+def brief(p):
+    """The few fields the change log keeps about a posting."""
+    return {"company": p["company"], "title": p["title"], "location": p["location"], "url": p["url"],
+            "posted": p["posted"], "pay": p["pay_field"]}
+
+
 if __name__ == "__main__":
     probe = json.load(open(data_path("boards", "probe_results.json")))
-    postings = []
+    today = COLLECT_DAY.isoformat()
+    first_seen = load_first_seen()
+    changes = load_changes(COLLECT_DAY)   # a second run on the same day adds to the first
+    logged_new = {x["url"] for x in changes["new"]}
+    logged_closed = {x["url"] for x in changes["closed"]}
     errors = []
+    done_boards = set()
+    total = 0
+    boards_changed = 0
     for company, boards in probe.items():
         for b in boards:
+            board = (b["ats"], b["slug"])
+            if board in done_boards:
+                continue   # the same board can be listed under two company names
+            done_boards.add(board)
             try:
                 jobs = FETCHERS[b["ats"]](b["slug"])
             except Exception as e:
                 errors.append({"company": company, "ats": b["ats"], "slug": b["slug"], "error": str(e)})
+                continue   # a failed fetch is not a closed job: the old postings stay as they were
+            previous = read_board(*board)
+            if not jobs and previous:
+                # An empty answer from a board that had jobs is more likely an outage than every job closing.
+                errors.append({"company": company, "ats": b["ats"], "slug": b["slug"],
+                               "error": "empty answer; kept the previous postings"})
                 continue
             for j in jobs:
                 j.update({"company": company, "ats": b["ats"], "slug": b["slug"]})
-                postings.append(j)
+            now_keys = {posting_key(j) for j in jobs}
+            for j in jobs:
+                key = posting_key(j)
+                if key not in first_seen:
+                    first_seen[key] = today
+                    if role_type(j["title"]) and j["url"] not in logged_new:
+                        changes["new"].append(brief(j))
+            for old in previous:
+                if posting_key(old) not in now_keys and role_type(old["title"]) and old["url"] not in logged_closed:
+                    changes["closed"].append({**brief(old), "first_seen": first_seen.get(posting_key(old), "")})
+            if write_board(b["ats"], b["slug"], jobs):
+                boards_changed += 1
+            total += len(jobs)
             print(company, b["ats"], b["slug"], len(jobs), flush=True)
-    with gzip.open(run_path("postings.json.gz", COLLECT_DAY), "wt", encoding="utf-8") as f:
-        json.dump(postings, f)
+    save_first_seen(first_seen)
+    changes["boards_kept"] = sorted({f"{e['ats']}/{e['slug']}" for e in errors})
+    with open(changes_path(COLLECT_DAY), "w", encoding="utf-8") as f:
+        json.dump(changes, f, indent=1, sort_keys=True, ensure_ascii=False)
     json.dump(errors, open(run_path("collect_errors.json", COLLECT_DAY), "w"), indent=1)
-    print("total postings", len(postings), "errors", len(errors))
+    print(f"total postings {total} | boards changed {boards_changed} | errors {len(errors)}")
+    print(f"target roles today: {len(changes['new'])} new, {len(changes['closed'])} closed")

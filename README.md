@@ -35,7 +35,7 @@ Check each site's terms before you run this, and keep the request rate polite.
 | Step | Command |
 |---|---|
 | Find job boards for new companies | `python src/probe_ats.py` |
-| Collect postings from known boards | `python src/collect.py` |
+| Collect postings from known boards (daily) | `python src/collect.py` |
 | Find investor portfolio boards (rarely) | `python src/vc_boards.py` |
 | Search investor boards for data roles | `python src/vc_search.py` |
 | Score and write the workbook (local only) | `python src/build_workbook.py` |
@@ -44,7 +44,9 @@ Check each site's terms before you run this, and keep the request rate polite.
 
 `refresh.py` scores the newest collected run, builds both pages, and copies the showcase page to the folder set as `website_dir` in `config.json`. It never uploads anything. Set `run_date` in `config.json` to rebuild a past run.
 
-`collect.py` and `vc_search.py` are the weekly collection job. `scripts/register_weekly_task.ps1` schedules them as a Windows task, and `scripts/weekly_collect.ps1` is what the task runs. Each run writes to a dated folder, so comparing folders gives a hiring trend.
+`collect.py` and `vc_search.py` are the daily collection job. `scripts/register_daily_task.ps1` schedules them as a Windows task, and `scripts/daily_collect.ps1` is what the task runs.
+
+**Daily collection stores only what changed.** It keeps the current postings of each job board in one file (one posting per line, sorted, so git stores a day's change as a small diff), the first day each posting was seen, and a daily log of target roles that appeared or closed. Scoring measures a role's age from the earlier of its posted date and its first-seen date, so a repost cannot make an old role look new. A board that fails to load, or suddenly answers with nothing, keeps its previous postings: a failed fetch is never treated as every job closing.
 
 ## Scoring
 

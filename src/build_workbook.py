@@ -1,7 +1,6 @@
 # Score target-role postings and write the ranked workbook.
 # Score (out of 125, minus layoff penalty):
 #   pay 30, investors 20, role fit 25, hiring proxy 15, recency 25, TF-IDF 10. PTO is not scored (owner's decision, 2026-11-19).
-import gzip
 import json
 import os
 import re
@@ -18,6 +17,7 @@ from filters import WRONG_BOARDS, RUN_DATE, role_type, seniority, location_fit, 
 from companies import ats_slug_from_url
 from profiles import build_profile, load_research, shortlist_by_name, stage_in_a_to_d
 from stack import company_stack, tools_in
+from store import load_first_seen, load_postings, posting_key
 from settings import (OUTPUT_DIR, PAY_FLOOR, PRIVATE_NOTES, RESUME_AE, RESUME_DE, RUN_DAY,
                       data_path, run_path)
 
@@ -128,8 +128,8 @@ def years_asked(text):
     return max(found) if found else None
 
 
-with gzip.open(run_path("postings.json.gz"), "rt", encoding="utf-8") as f:
-    postings = json.load(f)
+postings = load_postings(RUN_DAY)   # a legacy full snapshot for old runs, otherwise the current postings
+first_seen = load_first_seen()
 postings = [p for p in postings if (p["company"], p["ats"], p["slug"]) not in WRONG_BOARDS]
 
 # Investor-board companies: keep only the board their job link points to (same slug on another
@@ -155,9 +155,13 @@ for p in postings:
     seen_roles.add((p["company"], p["title"]))
     # Title is checked too, so "... - Europe" is not read as remote US.
     where = location_fit(p["location"] + " | " + p["title"], p["workplace"], p["text"])
-    posted = parse_date(p["posted"])
-    age = max(0, (RUN_DATE - posted).days) if posted else None  # posted today shows 0, not -1
-    roles.append({**p, "role_type": title_type, "level": seniority(p["title"]), "where": where, "age_days": age})
+    # Age counts from the earlier of the posted date and the day this collector first saw the posting.
+    # A repost that resets the posted date therefore cannot make an old role look new.
+    first_day = first_seen.get(posting_key(p), "")
+    dates = [d for d in (parse_date(p["posted"]), parse_date(first_day)) if d]
+    age = max(0, (RUN_DATE - min(dates)).days) if dates else None  # posted today shows 0, not -1
+    roles.append({**p, "role_type": title_type, "level": seniority(p["title"]), "where": where,
+                  "age_days": age, "first_seen": first_day})
 
 # Investor-board roles whose job is not on a board I can read (Workday, company career sites):
 # use the investor board's own data (title, date, pay, location). No description, so TF-IDF uses the title only.
@@ -169,6 +173,8 @@ for g in getro_roles:
         continue
     if (g["company"], g["title"]) in have:
         continue
+    if open_counts[g["company"]] > 0:
+        continue   # the company's own board was read and this role is not on it, so it has closed
     have.add((g["company"], g["title"]))
     pay = f"{int(g['pay_min'])}-{int(g['pay_max'])} USD" if g.get("pay_max") else ""
     roles.append({
@@ -297,6 +303,7 @@ for r in roles:
         "Location": r["location"],
         "Location fit": r["where"],
         "Posted": r["posted"][:10] if r["posted"] else "",
+        "First seen": r.get("first_seen", ""),
         "Age (days)": r["age_days"],
         "Date field": r["date_field"],
         "Pay low": low, "Pay high": high,
