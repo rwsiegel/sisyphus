@@ -58,6 +58,7 @@ def role_record(r, showcase):
             "tfidf": 0 if showcase else r["Pts: TF-IDF (10)"],
         },
         "layoff_pen": -(r["Layoff penalty"] or 0),
+        "loc_pen": -(r["Location penalty"] or 0),
         "years": r["Years experience asked"],
         "flags": split_flags(r["Flags"], showcase),
         "url": clean(r["Source page"]),

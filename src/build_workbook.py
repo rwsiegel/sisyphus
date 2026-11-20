@@ -30,6 +30,9 @@ PAY_TEXT = f"${PAY_FLOOR // 1000}K"
 # A near miss fails exactly one hard criterion by a small margin: posted up to 30 days ago,
 # or pay topping out within 10% of the pay floor.
 NEAR_MISS_DAYS = 30
+# Points taken off a role outside Boston and remote US, so it sinks to the bottom without being dropped.
+LOCATION_PENALTY = 40            # on-site or hybrid somewhere else, or remote outside the US
+LOCATION_PENALTY_UNCLEAR = 10    # remote, but the country is not stated
 NEAR_MISS_PAY_SHARE = 0.9
 
 
@@ -139,7 +142,8 @@ postings = [p for p in postings
 postings = [p for p in postings if p["company"] != "Truebill"]
 open_counts = Counter(p["company"] for p in postings)
 
-# Keep target roles in Boston or remote US (any age; the 7-day check is a column).
+# Keep every target role. Nothing is dropped for location or age: a role that fails a criterion
+# scores low and can be filtered out by hand.
 roles = []
 seen_roles = set()  # mirrored boards (e.g. Doppel on Greenhouse and Ashby) list the same job twice
 for p in postings:
@@ -151,8 +155,6 @@ for p in postings:
     seen_roles.add((p["company"], p["title"]))
     # Title is checked too, so "... - Europe" is not read as remote US.
     where = location_fit(p["location"] + " | " + p["title"], p["workplace"], p["text"])
-    if where.startswith("No:"):
-        continue
     posted = parse_date(p["posted"])
     age = max(0, (RUN_DATE - posted).days) if posted else None  # posted today shows 0, not -1
     roles.append({**p, "role_type": title_type, "level": seniority(p["title"]), "where": where, "age_days": age})
@@ -228,7 +230,13 @@ for r in roles:
     tfidf_pts = round(10 * r["cosine"] / best_cosine, 1)
     recency_pts = recency_points(r["age_days"])
     layoff_pen = prof["layoff_penalty"]
-    total = pay_pts + 0 + fit_pts + hire_pts + recency_pts + tfidf_pts - layoff_pen
+    if r["where"] in ("Boston", "Remote US"):
+        loc_pen = 0
+    elif r["where"].startswith("Remote"):
+        loc_pen = LOCATION_PENALTY_UNCLEAR
+    else:
+        loc_pen = LOCATION_PENALTY
+    total = pay_pts + 0 + fit_pts + hire_pts + recency_pts + tfidf_pts - layoff_pen - loc_pen
 
     within_7 = r["age_days"] is not None and r["age_days"] <= 7
     not_junior = r["level"] != "junior"
@@ -239,6 +247,8 @@ for r in roles:
         fails.append(f"posted {r['age_days']} days ago")
     if not not_junior:
         fails.append("junior title")
+    if r["where"].startswith("No:"):
+        fails.append("outside Boston and remote US")
     if low is None:
         fails.append("pay unposted (allowed, flagged)")
     elif not pay_ok:
@@ -256,6 +266,9 @@ for r in roles:
     if not not_junior:
         hard_misses.append("junior title")
         small_miss = False
+    if r["where"].startswith("No:"):
+        hard_misses.append("outside Boston and remote US")
+        small_miss = False
     if low is not None and not pay_ok:
         hard_misses.append(f"pay tops out below {PAY_TEXT}")
         if high < PAY_FLOOR * NEAR_MISS_PAY_SHARE:
@@ -272,7 +285,7 @@ for r in roles:
 
     rows.append({
         "Score": round(total, 1),
-        "Meets all hard criteria": "Yes" if (within_7 and not_junior and (pay_ok or low is None)) else "No",
+        "Meets all hard criteria": "Yes" if (within_7 and not_junior and not r["where"].startswith("No:") and (pay_ok or low is None)) else "No",
         "Why not": "; ".join(fails),
         "Hard criteria missed": len(hard_misses),
         "Near miss: missed only on": hard_misses[0] if is_near_miss else "",
@@ -295,6 +308,7 @@ for r in roles:
         "Pts: TF-IDF (10)": tfidf_pts,
         "Years experience asked": years,
         "Layoff penalty": -layoff_pen,
+        "Location penalty": -loc_pen,
         "TF-IDF cosine": round(r["cosine"], 3),
         "Resume used": r["resume_used"],
         "Open postings on board": open_counts[r["company"]],
@@ -432,6 +446,7 @@ scoring = pd.DataFrame([
     ("Hiring proxy", 15, "Open postings on board: 50+ = 15, 20-49 = 10, 5-19 = 5, under 5 = 0."),
     ("TF-IDF", 10, "Cosine similarity to resume (ae for analytics engineer roles, de otherwise), scaled so the best match = 10."),
     ("Layoffs", "-20 / -10", "Layoffs in last 12 months -20, 12-24 months -10."),
+    ("Location penalty", "-40 / -10", "Outside Boston and remote US: -40. Remote with no country stated: -10. Roles are never dropped for location; they score low and can be filtered by hand."),
     ("Hard criteria", "", f"Target title, Boston or remote US, posted within 7 days, not a junior title, pay top >= {PAY_TEXT} or unposted (flagged). Senior-or-above dropped 2026-11-19."),
     ("Near misses", "", "A role that fails exactly one hard criterion by a small margin: posted 8 to 30 days ago, or pay topping out within 10% of the pay floor. The Near misses sheet and the page list each with the one thing that missed."),
     ("Flags only", "", "Stage outside Series A-D, industry, Glassdoor under 3.5, source-list screen reason, private notes from config.json, asks 3 years experience or less."),

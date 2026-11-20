@@ -77,7 +77,7 @@ __BACKLINK__
 
 <details class="panel">
   <summary>How the score works</summary>
-  <p>Each open data role is scored out of <span id="maxscore"></span>: pay (does the top of the range reach __PAY_FLOOR__), role fit (analytics engineer scores highest, then data engineer, data platform, software engineer on a data platform; seniority; Boston or remote US), recency (1 day or less scores highest, easing down to 90 days), hiring (how many roles the company has open), investors, and layoffs subtract. A company's number is its best role's score compared with the average. A near miss is a role that misses exactly one hard criterion by a small margin: posted 8 to 30 days ago, or pay close to the target. Stage outside Series A to D, industry, and a Glassdoor rating under 3.5 are flags, never reasons to drop a company. Facts come from public job boards and web research; each card lists its sources.</p>
+  <p>Each open data role is scored out of <span id="maxscore"></span>: pay (does the top of the range reach __PAY_FLOOR__), role fit (analytics engineer scores highest, then data engineer, data platform, software engineer on a data platform; seniority; Boston or remote US), recency (1 day or less scores highest, easing down to 90 days), hiring (how many roles the company has open), investors, and layoffs and a location outside Boston and remote US subtract. Nothing is dropped: a role that fails a criterion just scores low, and the filters let you hide it. A company's number is its best role's score compared with the average. A near miss is a role that misses exactly one hard criterion by a small margin: posted 8 to 30 days ago, or pay close to the target. Stage outside Series A to D, industry, and a Glassdoor rating under 3.5 are flags, never reasons to drop a company. Facts come from public job boards and web research; each card lists its sources.</p>
 </details>
 <details class="panel">
   <summary>Adjust the scoring (dials)</summary>
@@ -108,7 +108,7 @@ const COMPONENTS = [
 const MAX_TOTAL = COMPONENTS.reduce((sum, c) => sum + c.max, 0);
 
 const W = {};            // dial values
-function resetWeights() { for (const c of COMPONENTS) W[c.key] = 1; W.layoff = 1; }
+function resetWeights() { for (const c of COMPONENTS) W[c.key] = 1; W.layoff = 1; W.loc = 1; }
 resetWeights();
 
 const F = { text: "", type: "", where: "", stage: "", maxAge: "", crit: "", showEmpty: false };
@@ -138,13 +138,14 @@ function isPremium(name) { const n = name.toLowerCase(); return DATA.premium.som
 function roleScore(r) {
   let s = 0;
   for (const c of COMPONENTS) s += W[c.key] * (r.pts[c.key] || 0);
-  return s - W.layoff * (r.layoff_pen || 0);
+  return s - W.layoff * (r.layoff_pen || 0) - W.loc * (r.loc_pen || 0);
 }
 
 // ---------- filtering ----------
 function passRole(r) {
   if (F.type && r.type !== F.type) return false;
-  if (F.where && r.where !== F.where) return false;
+  if (F.where === "ok" && r.where !== "Boston" && r.where !== "Remote US") return false;
+  if (F.where && F.where !== "ok" && r.where !== F.where) return false;
   if (F.maxAge && (r.age === null || r.age > Number(F.maxAge))) return false;
   if (F.crit === "meets" && !r.meets) return false;
   if (F.crit === "near" && !r.near_miss) return false;
@@ -232,6 +233,7 @@ function card(c, roles, rank, avg) {
       parts.append(el("div", null, el("span", { text: comp.label }), el("span", { text: ((W[comp.key] * best.pts[comp.key]) || 0).toFixed(1) + "/" + (comp.max * W[comp.key]).toFixed(0) })));
     }
     if (best.layoff_pen) parts.append(el("div", null, el("span", { text: "Layoffs" }), el("span", { text: "-" + (W.layoff * best.layoff_pen).toFixed(0) })));
+    if (best.loc_pen) parts.append(el("div", null, el("span", { text: "Location" }), el("span", { text: "-" + (W.loc * best.loc_pen).toFixed(0) })));
     side.append(parts);
   } else {
     side.append(el("div", { class: "small", text: "no open target role" }));
@@ -337,12 +339,12 @@ function render() {
 function buildControls() {
   document.getElementById("sub").textContent =
     "Collected " + DATA.run_date + " from public job boards and investor portfolio boards. " +
-    DATA.companies.length + " companies, " + DATA.roles.length + " open data roles in Boston or remote US." +
+    DATA.companies.length + " companies, " + DATA.roles.length + " open data roles; roles outside Boston and remote US are kept but score low." +
     (SHOWCASE ? " Showcase version." : " Private version: includes resume match.");
   document.getElementById("maxscore").textContent = MAX_TOTAL;
 
   const dials = document.getElementById("dials");
-  const dialList = COMPONENTS.map(c => ({ key: c.key, label: c.label + " (" + c.max + ")" })).concat([{ key: "layoff", label: "Layoff penalty" }]);
+  const dialList = COMPONENTS.map(c => ({ key: c.key, label: c.label + " (" + c.max + ")" })).concat([{ key: "layoff", label: "Layoff penalty" }, { key: "loc", label: "Location penalty" }]);
   for (const d of dialList) {
     const out = el("span", { text: "1.0×" });
     const input = el("input", { type: "range", min: "0", max: "2", step: "0.1", value: "1", "aria-label": d.label, "data-key": d.key });
@@ -372,7 +374,7 @@ function buildControls() {
   f.append(
     search,
     select("Role type", "type", [["", "All role types"], ["analytics engineer", "Analytics engineer"], ["data engineer", "Data engineer"], ["data platform engineer", "Data platform"], ["software engineer on a data platform", "Software engineer on data platform"]]),
-    select("Location", "where", [["", "Boston or remote US"], ["Boston", "Boston"], ["Remote US", "Remote US"]]),
+    select("Location", "where", [["", "All locations"], ["ok", "Boston or remote US"], ["Boston", "Boston"], ["Remote US", "Remote US"]]),
     select("Stage", "stage", [["", "All stages"], ["ok", "Series A–D"], ["flag", "Outside A–D (flagged)"]]),
     select("Posted within", "maxAge", [["", "Any age"], ["7", "7 days"], ["14", "14 days"], ["30", "30 days"], ["90", "90 days"]]),
     select("Criteria", "crit", [["", "All roles"], ["meets", "Meets every criterion"], ["near", "Near misses (miss one by a little)"]]),

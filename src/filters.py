@@ -74,19 +74,32 @@ def seniority(title):
 
 
 BOSTON_WORDS = r"boston|cambridge, ma|cambridge, massachusetts|somerville|waltham|newton|norwood|burlington, ma|\bma\b|massachusetts"
-US_REMOTE_WORDS = r"remote.*(us|u\.s\.|united states|usa|north america|americas)|(us|u\.s\.|united states|usa)[^;]*remote|remote$|^remote\b"
+# Evidence a posting is open to US candidates. Word boundaries keep "us" from matching inside "Austin".
+US_WORDS = r"\b(us|u\.s\.|usa|united states|north america|americas)\b"
+US_STATE = r",\s*(A[KLRZ]|C[AOT]|D[CE]|FL|GA|HI|I[ADLN]|K[SY]|LA|M[ADEINOST]|N[CDEHJMVY]|O[HKR]|PA|RI|S[CD]|T[NX]|UT|V[AT]|W[AIVY])\b"
+NON_US_WORDS = (r"canada|\buk\b|united kingdom|london|india|europe|germany|poland|brazil|mexico|australia|toronto|vancouver|"
+                r"latam|emea|apac|budapest|tel aviv|são paulo|sao paulo|ireland|dublin|stockholm|sweden|france|paris|berlin|"
+                r"spain|netherlands|singapore|japan|israel")
 
 
 def location_fit(location, workplace, text):
-    loc = (location or "").lower()
+    """Boston, Remote US, Remote (country unclear), or "No: <location>". Nothing is dropped; the caller scores it."""
+    original = location or ""
+    loc = original.lower()
     wp = (workplace or "").lower()
     if re.search(BOSTON_WORDS, loc):
         return "Boston"
-    if re.search(US_REMOTE_WORDS, loc) or ("remote" in wp and not re.search(r"canada|uk|united kingdom|london|india|europe|germany|poland|brazil|mexico|australia|toronto|vancouver|latam|emea|apac|budapest|tel aviv|são paulo|sao paulo", loc)):
-        return "Remote US"
-    if "remote" in loc:
+    is_remote = "remote" in loc or "remote" in wp
+    if is_remote:
+        # A posting open to the US counts even if it also lists other countries ("United States & Canada").
+        if re.search(US_WORDS, loc) or re.search(US_STATE, original):
+            return "Remote US"
+        if re.search(NON_US_WORDS, loc):
+            return "No: " + original
+        if "remote" in wp:
+            return "Remote US"
         return "Remote (country unclear)"
-    return "No: " + location
+    return "No: " + original
 
 
 def parse_date(value):

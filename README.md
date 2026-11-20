@@ -59,6 +59,8 @@ Each open role is scored from these parts. The Scoring sheet in the workbook has
 
 Stage, industry, and a low Glassdoor rating are flags, never reasons to drop a company.
 
+**Nothing is thrown away.** A role that fails a criterion (wrong location, too old, pay below your floor) is not dropped. It scores low, sinks down the list, and the page's filters let you hide it. Roles outside Boston and remote US take a location penalty of 40 points.
+
 **Near misses.** A role that fails exactly one hard criterion by a small margin (posted 8 to 30 days ago, or pay within 10% of your floor) is listed on its own sheet and filter, with the one thing that missed. Weights are plain numbers in `src/build_workbook.py` and are also live dials in the HTML page.
 
 ## The interactive page
