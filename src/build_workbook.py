@@ -17,7 +17,7 @@ from company_facts import FACTS, NOT_REACHED, TOP10_NOTE
 from filters import WRONG_BOARDS, RUN_DATE, role_type, seniority, location_fit, parse_date
 from companies import ats_slug_from_url
 from profiles import build_profile, load_research, shortlist_by_name, stage_in_a_to_d
-from stack import company_stack
+from stack import company_stack, tools_in
 from settings import (OUTPUT_DIR, PAY_FLOOR, PRIVATE_NOTES, RESUME_AE, RESUME_DE, RUN_DAY,
                       data_path, run_path)
 
@@ -182,6 +182,7 @@ for g in getro_roles:
 # TF-IDF: ae resume for analytics engineer roles, de resume for everything else.
 resume_de = read_docx(RESUME_DE)
 resume_ae = read_docx(RESUME_AE)
+resume_ae_tools = set(tools_in(resume_ae))
 texts = [r["title"] + " " + r["text"] for r in roles]
 vectorizer = TfidfVectorizer(stop_words="english", sublinear_tf=True)
 matrix = vectorizer.fit_transform([resume_de, resume_ae] + texts)
@@ -311,6 +312,8 @@ for r in roles:
         "Location penalty": -loc_pen,
         "TF-IDF cosine": round(r["cosine"], 3),
         "Resume used": r["resume_used"],
+        # Tools named in both the analytics engineer resume and the posting (private; the page filters them).
+        "Resume tools shared": ", ".join(sorted(resume_ae_tools & set(tools_in(r["text"])))),
         "Open postings on board": open_counts[r["company"]],
         "Stage": prof["stage"],
         "Layoffs": prof["layoffs"],

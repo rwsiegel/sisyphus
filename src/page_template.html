@@ -272,6 +272,7 @@ function card(c, roles, rank, avg) {
         el("a", { href: r.url, text: r.title }),
         el("span", { class: "rscore", text: "  " + [r.location || r.where, fmtAge(r.age), fmtPay(r), "score " + r._score.toFixed(1)].join(" · ") }));
       box.append(line);
+      if (r.shared_tools.length) box.append(el("div", { class: "rscore", text: "Matches my analytics engineer resume: " + r.shared_tools.join(", ") }));
       const ownFlags = r.flags.filter(f => !sharedFlags.includes(f));
       if (ownFlags.length) box.append(el("div", { class: "rscore", text: ownFlags.join("; ") }));
     });

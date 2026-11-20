@@ -12,6 +12,7 @@
     "Example Company": "note shown as a flag, e.g. already applied"
   },
   "pay_floor": 150000,
+  "showcase_skills": ["SQL", "Python"],
   "site_home_url": "/",
   "site_home_label": "Your Name"
 }

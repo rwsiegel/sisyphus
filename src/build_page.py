@@ -5,7 +5,7 @@
 import json
 import os
 
-from settings import OUTPUT_DIR, PAY_FLOOR, PRIVATE_NOTES, RUN_DAY, SITE_HOME_LABEL, SITE_HOME_URL
+from settings import OUTPUT_DIR, PAY_FLOOR, PRIVATE_NOTES, RUN_DAY, SHOWCASE_SKILLS, SITE_HOME_LABEL, SITE_HOME_URL
 from vc_boards import FIRMS
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -37,6 +37,15 @@ def split_flags(text, showcase):
     return [p for p in parts if not is_private(p, showcase)]
 
 
+def shared_tools(text, showcase):
+    """Tools in both the resume and the posting. The showcase shows only the tools listed in showcase_skills."""
+    tools = [t.strip() for t in clean(text).split(",") if t.strip()]
+    if not showcase:
+        return tools
+    allowed = {s.lower() for s in SHOWCASE_SKILLS}
+    return [t for t in tools if t.lower() in allowed]
+
+
 def role_record(r, showcase):
     return {
         "company": r["Company"],
@@ -64,6 +73,7 @@ def role_record(r, showcase):
         "url": clean(r["Source page"]),
         "meets": r["Meets all hard criteria"] == "Yes",
         "near_miss": hide_pay_floor(clean(r["Near miss: missed only on"]), showcase),
+        "shared_tools": shared_tools(r["Resume tools shared"], showcase),
         "why_not": hide_pay_floor(clean(r["Why not"]), showcase),
     }
 

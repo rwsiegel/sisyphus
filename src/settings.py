@@ -46,6 +46,8 @@ RESUME_AE = CONFIG.get("resume_ae", "")
 OUTPUT_DIR = CONFIG.get("output_dir", "")
 # Local copy of your website. The refresh puts the showcase page at <website_dir>/sisyphus/index.html.
 WEBSITE_DIR = CONFIG.get("website_dir", "")
+# Tools the showcase page may show as "matches my resume". Anything else stays on your PC.
+SHOWCASE_SKILLS = CONFIG.get("showcase_skills", [])
 # Pay floor for the pay score and the hard criteria, in dollars. Set your own in config.json.
 PAY_FLOOR = CONFIG.get("pay_floor", 150_000)
 # Optional link back to your own site, shown at the top of the showcase page.
