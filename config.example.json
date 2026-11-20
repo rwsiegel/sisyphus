@@ -7,6 +7,7 @@
   "resume_de": "C:\\path\\to\\data_engineer_resume.docx",
   "resume_ae": "C:\\path\\to\\analytics_engineer_resume.docx",
   "output_dir": "C:\\path\\to\\private\\output\\folder",
+  "website_dir": "C:\\path\\to\\local\\copy\\of\\your\\website",
   "private_notes": {
     "Example Company": "note shown as a flag, e.g. already applied"
   },

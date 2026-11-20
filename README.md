@@ -40,6 +40,9 @@ Check each site's terms before you run this, and keep the request rate polite.
 | Search investor boards for data roles | `python src/vc_search.py` |
 | Score and write the workbook (local only) | `python src/build_workbook.py` |
 | Build the interactive pages (local only) | `python src/build_page.py` |
+| **Weekly refresh: pull, score, build pages, update your local website copy** | `python src/refresh.py` |
+
+`refresh.py` scores the newest collected run, builds both pages, and copies the showcase page to the folder set as `website_dir` in `config.json`. It never uploads anything. Set `run_date` in `config.json` to rebuild a past run.
 
 `collect.py` and `vc_search.py` are the weekly collection job. `scripts/register_weekly_task.ps1` schedules them as a Windows task, and `scripts/weekly_collect.ps1` is what the task runs. Each run writes to a dated folder, so comparing folders gives a hiring trend.
 

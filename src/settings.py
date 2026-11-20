@@ -16,8 +16,22 @@ if os.path.exists(config_path):
 # The jobhunt-data repo (collected public data only). Default: a sibling folder of this repo.
 DATA_DIR = CONFIG.get("data_dir") or os.path.join(os.path.dirname(REPO_DIR), "jobhunt-data", "data")
 
-# Run date: today unless config.json pins one (used to rebuild a past run).
-RUN_DAY = date.fromisoformat(CONFIG["run_date"]) if CONFIG.get("run_date") else date.today()
+def latest_run_day():
+    """The newest dated folder in data/runs, or today if there is none yet."""
+    runs_dir = os.path.join(DATA_DIR, "runs")
+    days = []
+    if os.path.isdir(runs_dir):
+        for name in os.listdir(runs_dir):
+            try:
+                days.append(date.fromisoformat(name))
+            except ValueError:
+                pass
+    return max(days) if days else date.today()
+
+
+# Which collected run to score. In order: the JOBHUNT_RUN_DATE environment variable, a pinned
+# run_date in config.json (rebuilds a past run), or the newest run folder.
+RUN_DAY = date.fromisoformat(os.environ.get("JOBHUNT_RUN_DATE") or CONFIG.get("run_date") or latest_run_day().isoformat())
 RUN_DATE = datetime(RUN_DAY.year, RUN_DAY.month, RUN_DAY.day, tzinfo=timezone.utc)
 
 # Collection always files its output under today's date, even when config.json pins an older run_date for scoring.
@@ -30,6 +44,8 @@ SHORTLIST_HTML = CONFIG.get("shortlist_html", "")
 RESUME_DE = CONFIG.get("resume_de", "")
 RESUME_AE = CONFIG.get("resume_ae", "")
 OUTPUT_DIR = CONFIG.get("output_dir", "")
+# Local copy of your website. The refresh puts the showcase page at <website_dir>/sisyphus/index.html.
+WEBSITE_DIR = CONFIG.get("website_dir", "")
 # Pay floor for the pay score and the hard criteria, in dollars. Set your own in config.json.
 PAY_FLOOR = CONFIG.get("pay_floor", 150_000)
 # Optional link back to your own site, shown at the top of the showcase page.

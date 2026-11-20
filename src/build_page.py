@@ -122,6 +122,8 @@ def build(showcase):
     description = "An interactive tool that scores analytics and data engineering roles from public job boards. Change the weights and the ranking updates."
     html = (template.replace("__TITLE__", title).replace("__DESCRIPTION__", description)
             .replace("__BACKLINK__", backlink)
+            .replace("__UPDATED_ISO__", RUN_DAY.isoformat())
+            .replace("__UPDATED__", f"{RUN_DAY:%B} {RUN_DAY.day}, {RUN_DAY.year}")
             .replace("__PAY_FLOOR__", "target pay" if showcase else PAY_TEXT)
             .replace("__DATA__", payload))
     name = f"job_search_{'showcase' if showcase else 'run'}_{RUN_DAY.isoformat()}.html"

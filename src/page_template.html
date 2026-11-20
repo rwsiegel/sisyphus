@@ -25,6 +25,7 @@ body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 syst
 a { color: var(--link); }
 main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 64px; }
 h1 { font-size: 26px; margin: 0 0 4px; }
+.updated { font: 600 13px ui-monospace, Consolas, monospace; color: var(--muted); margin: 0 0 6px; }
 .sub { color: var(--muted); margin: 0 0 16px; }
 details.panel { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; margin: 0 0 12px; }
 details.panel summary { cursor: pointer; font-weight: 600; }
@@ -73,6 +74,7 @@ details.src a { display: block; overflow-wrap: anywhere; }
 <main>
 __BACKLINK__
 <h1>__TITLE__</h1>
+<p class="updated">Last updated <time datetime="__UPDATED_ISO__">__UPDATED__</time>. Refreshed every week.</p>
 <p class="sub" id="sub"></p>
 
 <details class="panel">
